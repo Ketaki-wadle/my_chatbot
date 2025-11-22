@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart AI Chatbot 🤖</title>
+
+    <style>
+        /* GLOBAL STYLING */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            height: 100vh;
+            transition: background 0.3s ease;
+        }
+
+        h1 {
+            margin-top: 25px;
+            font-weight: 600;
+            color: #333;
+            letter-spacing: 1px;
+        }
+
+        body.dark {
+            background: #121212;
+        }
+
+        /* CHAT BOX */
+        #chat-box {
+            width: 80%;
+            max-width: 650px;
+            height: 65vh;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid #dcdcdc;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+            transition: 0.3s ease;
+        }
+
+        body.dark #chat-box {
+            background: #1e1e1e;
+            color: white;
+            border-color: #444;
+        }
+
+        .user, .bot { margin: 14px 0; }
+        .user { text-align: right; }
+        .bot { text-align: left; }
+
+        .bubble {
+            padding: 12px 15px;
+            border-radius: 12px;
+            max-width: 80%;
+            line-height: 1.5;
+            font-size: 15px;
+            box-shadow: 0 2px 7px rgba(0,0,0,0.15);
+        }
+
+        .user .bubble {
+            background: #d6eaff;
+            color: #003958;
+            display: inline-block;
+        }
+
+        .bot .bubble {
+            background: #f4f4f4;
+            color: #222;
+            display: inline-block;
+        }
+
+        body.dark .user .bubble {
+            background: #2a6fa1;
+            color: white;
+        }
+
+        body.dark .bot .bubble {
+            background: #333;
+            color: #eee;
+        }
+
+        /* INPUT BAR */
+        #user-input {
+            width: 350px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #bbb;
+            font-size: 15px;
+        }
+
+        button {
+            background: #4a90e2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #3578c8;
+        }
+
+        /* DARK MODE SWITCH */
+        #dark-toggle {
+            position: absolute;
+            top: 18px;
+            right: 25px;
+            width: 60px;
+            height: 30px;
+            background: #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        #dark-toggle .circle {
+            width: 23px;
+            height: 23px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.dark #dark-toggle {
+            background: #444;
+            justify-content: flex-end;
+        }
+
+        body.dark #dark-toggle .circle {
+            background: black;
+            color: yellow;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- DARK MODE -->
+<div id="dark-toggle" onclick="toggleDarkMode()">
+    <div class="circle">🌙</div>
+</div>
+
+<h1>Smart AI Chatbot 🤖</h1>
+
+<!-- MODE SELECT (ONLY TEXT + VOICE OUTPUT) -->
+<div style="margin: 15px;">
+    <label><b>Chat Mode:</b></label>
+    <select id="mode" style="padding: 8px; border-radius: 8px;">
+        <option value="text">Text Only</option>
+        <option value="voice_output">Voice Output</option>
+    </select>
+</div>
+
+<div id="chat-box"></div>
+
+<div>
+    <input type="text" id="user-input" placeholder="Type your message...">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+/* POP SOUND */
+const popSound = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_7e70a327ba.mp3?filename=pop-94319.mp3");
+popSound.volume = 0.5;
+
+/* DARK MODE */
+function toggleDarkMode() {
+    document.body.classList.toggle("dark");
+    const icon = document.querySelector("#dark-toggle .circle");
+    icon.innerHTML = document.body.classList.contains("dark") ? "☀️" : "🌙";
+}
+
+/* CSRF TOKEN */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+/* =============== VOICE OUTPUT ONLY =============== */
+function speak(text) {
+    let mode = document.getElementById("mode").value;
+    if (mode !== "voice_output") return;
+
+    const speakText = new SpeechSynthesisUtterance(text);
+    speakText.lang = "en-IN";
+    speakText.rate = 1;
+    speakText.pitch = 1;
+
+    speechSynthesis.speak(speakText);
+}
+
+/* =============== SEND MESSAGE =============== */
+async function sendMessage() {
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+    const userMsg = input.value.trim();
+
+    if (!userMsg) return;
+
+    let userDiv = document.createElement("div");
+    userDiv.className = "user";
+    userDiv.innerHTML = `<div class="bubble"><b>You:</b> ${userMsg}</div>`;
+    chatBox.appendChild(userDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    input.value = "";
+
+    let load = document.createElement("div");
+    load.className = "bot";
+    load.innerHTML = `<div class="bubble"><b>Bot:</b> <i>typing...</i></div>`;
+    chatBox.appendChild(load);
+
+    const response = await fetch("/get_response/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+        },
+        body: JSON.stringify({ message: userMsg })
+    });
+
+    const data = await response.json();
+    load.remove();
+
+    let botDiv = document.createElement("div");
+    botDiv.className = "bot";
+    botDiv.innerHTML = `<div class="bubble"><b>Bot:</b> <span></span></div>`;
+    chatBox.appendChild(botDiv);
+
+    let text = data.reply;
+    let span = botDiv.querySelector("span");
+    let i = 0;
+
+    function type() {
+        if (i < text.length) {
+            span.textContent += text.charAt(i);
+            i++;
+            setTimeout(type, 15);
+        } else {
+            speak(text);
+        }
+    }
+    type();
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* ENTER KEY */
+document.getElementById("user-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+</script>
+
+</body>
+</html>
